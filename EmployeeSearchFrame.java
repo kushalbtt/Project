@@ -4,8 +4,8 @@
  *    are to be built by you and your group.
  */
 
-import java.awt.EventQueue;
 
+import java.awt.EventQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
