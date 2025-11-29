@@ -15,6 +15,7 @@ import javax.swing.JTextField;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JCheckBox;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
@@ -34,6 +35,8 @@ public class EmployeeSearchFrame extends JFrame {
 	/**
 	 * Launch the application.
 	 */
+	private Database db = new Database();
+
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -77,14 +80,37 @@ public class EmployeeSearchFrame extends JFrame {
 		 */
 		btnDBFill.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String[] dept = {"Headquarters", "Reorganization"};	
-				for(int i = 0; i < dept.length; i++) {
-					department.addElement(dept[i]);
-				}
-				String[] prj = {"ProdoctX", "ProductY", "ProductZ"};
-				for(int j = 0; j < prj.length; j++) {
-					project.addElement(prj[j]);
-				}
+				department.clear();
+project.clear();
+
+boolean ok = db.connect("example.properties");
+if (!ok) {
+    JOptionPane.showMessageDialog(null, "Could not open database.");
+    return;
+}
+
+try {
+    var con = db.getConnection();
+
+    // Load Departments
+    var st1 = con.prepareStatement("SELECT Dname FROM DEPARTMENT ORDER BY Dname;");
+    var rs1 = st1.executeQuery();
+    while (rs1.next()) {
+        department.addElement(rs1.getString("Dname"));
+    }
+
+    // Load Projects
+    var st2 = con.prepareStatement("SELECT Pname FROM PROJECT ORDER BY Pname;");
+    var rs2 = st2.executeQuery();
+    while (rs2.next()) {
+        project.addElement(rs2.getString("Pname"));
+    }
+
+} catch (Exception ex) {
+    JOptionPane.showMessageDialog(null, "Error loading data.");
+    ex.printStackTrace();
+}
+
 				
 			}
 		});
@@ -131,7 +157,40 @@ public class EmployeeSearchFrame extends JFrame {
 		JButton btnSearch = new JButton("Search");
 		btnSearch.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				textAreaEmployee.setText("John Smith\nFranklin Wong");
+				textAreaEmployee.setText("");
+
+String selectedDept = lstDepartment.getSelectedValue();
+if (selectedDept == null) {
+    textAreaEmployee.setText("Select a department first.");
+    return;
+}
+
+try {
+    var con = db.getConnection();
+
+    String sql = """
+        SELECT Fname, Lname 
+        FROM EMPLOYEE 
+        WHERE Dno = (
+            SELECT Dnumber FROM DEPARTMENT WHERE Dname = ?
+        );
+    """;
+
+    var st = con.prepareStatement(sql);
+    st.setString(1, selectedDept);
+    var rs = st.executeQuery();
+
+    while (rs.next()) {
+        textAreaEmployee.append(
+            rs.getString("Fname") + " " + rs.getString("Lname") + "\n"
+        );
+    }
+
+} catch (Exception ex) {
+    JOptionPane.showMessageDialog(null, "Search failed.");
+    ex.printStackTrace();
+}
+
 			}
 		});
 		btnSearch.setBounds(80, 276, 89, 23);
@@ -141,6 +200,11 @@ public class EmployeeSearchFrame extends JFrame {
 		btnClear.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				textAreaEmployee.setText("");
+lstDepartment.clearSelection();
+lstProject.clearSelection();
+chckbxNotDept.setSelected(false);
+chckbxNotProject.setSelected(false);
+
 			}
 		});
 		btnClear.setBounds(236, 276, 89, 23);
