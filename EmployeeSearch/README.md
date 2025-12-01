@@ -4,8 +4,6 @@ A simple Java Swing desktop app that connects to a MySQL database (the typical `
 - Load **Departments** and **Projects** from the database
 - Select a **Department** and click **Search** to list employees in that department
 
-> Note: The repo root contains a folder named `EmployeeSearch/` where the actual app lives.  
-> There’s also a small `HelloWorld.java` in the root (unrelated to the main app).
 
 ---
 
